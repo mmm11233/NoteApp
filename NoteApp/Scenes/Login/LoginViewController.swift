@@ -14,19 +14,16 @@ class LoginViewController: UIViewController {
         let image = UIImage(named: imageName)
         let imageView = UIImageView(image: image!)
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        
         return imageView
     }()
     
     let presentStackView: UIStackView = {
         let stackView = UIStackView()
-        
         return stackView
     }()
     
     let presentSecondStackView: UIStackView = {
         let stackView = UIStackView()
-        
         return stackView
     }()
     
@@ -35,7 +32,6 @@ class LoginViewController: UIViewController {
     
     let signInButton: UIButton =  {
         let button = UIButton()
-        
         return button
     }()
     
@@ -50,16 +46,37 @@ class LoginViewController: UIViewController {
         signInButton.addTarget(self, action: #selector(signInButtonTapped), for: .touchUpInside)
     }
     
+    
     @objc func signInButtonTapped() {
-        if  emailTextField?.text?.isEmpty == false && passwordTextField?.text?.isEmpty == false {
-            //            let homePageViewController = HomePageViewController()
-            //            navigationController?.pushViewController(homePageViewController, animated: true)
-        } else {
-            let alert = UIAlertController(title: "Error", message: "Both email and password are required.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-            present(alert, animated: true, completion: nil)
+        if let email = emailTextField?.text, let password = passwordTextField?.text, !email.isEmpty, !password.isEmpty {
+            let defaults = UserDefaults.standard
+            
+            if defaults.bool(forKey: email) == false {
+                defaults.set(true, forKey: "\(email)")
+                let welcomeAlert = UIAlertController(title: "Welcome!", message: "You're logging in for the first time. Welcome to our app!", preferredStyle: .alert)
+                welcomeAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                present(welcomeAlert, animated: true, completion: nil)
+            }
+            
+            _ = KeychainManager.saveUsernamePassword(username: email, password: password)
+            
+            if let savedPassword = KeychainManager.retrievePasswordForUsername(username: email) {
+                if savedPassword == password {
+                    let noteListViewController = NoteListViewController()
+                    navigationController?.pushViewController(noteListViewController, animated: true)
+                } else {
+                    let alert = UIAlertController(title: "Error", message: "Email or Password is incorrect", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    present(alert, animated: true, completion: nil)
+                }
+            } else {
+                let alert = UIAlertController(title: "Error", message: "User not found", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                present(alert, animated: true, completion: nil)
+            }
         }
     }
+    
     //MARK: - Setup UI
     func setupPresentImage() {
         view.addSubview(presentImage)
